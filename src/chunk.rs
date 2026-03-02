@@ -4,6 +4,11 @@ use crate::value::{Value, ValueArray};
 #[repr(u8)]
 pub enum OpCode {
     Constant,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Negate,
     Return,
 }
 
@@ -11,12 +16,18 @@ impl From<u8> for OpCode {
     fn from(byte: u8) -> Self {
         match byte {
             0 => OpCode::Constant,
-            1 => OpCode::Return,
+            1 => OpCode::Add,
+            2 => OpCode::Subtract,
+            3 => OpCode::Multiply,
+            4 => OpCode::Divide,
+            5 => OpCode::Negate,
+            6 => OpCode::Return,
             _ => panic!("Invalid opcode: {}", byte),
         }
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Chunk {
     code: Vec<u8>,
     lines: Vec<i32>,
