@@ -11,7 +11,7 @@ macro_rules! binary_op {
     ($self: ident, $op: tt) => {
         let a = $self.stack.pop().unwrap();
         let b = $self.stack.pop().unwrap();
-        $self.stack.push(a $op b);
+        $self.stack.push(b $op a);
     }
 }
 
