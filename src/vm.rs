@@ -1,8 +1,8 @@
 use crate::chunk::{Chunk, OpCode};
 use crate::value::Value;
 
-pub struct VM<'a> {
-    chunk: Option<&'a Chunk>,
+pub struct VM {
+    chunk: Option<Chunk>,
     ip: usize,
     stack: Vec<Value>,
 }
@@ -15,12 +15,18 @@ macro_rules! binary_op {
     }
 }
 
-impl<'a> VM<'a> {
+impl VM {
     pub fn new() -> Self {
         Self { chunk: None, ip: 0, stack: Vec::new() }
     }
 
-    pub fn interpret(&mut self, chunk: &'a Chunk) -> InterpretResult {
+    pub fn interpret(&mut self, source: &str) -> InterpretResult {
+        let mut chunk = Chunk::new();
+
+        if !crate::compiler::compile(source, &mut chunk) {
+            return InterpretResult::CompileError;
+        }
+
         self.chunk = Some(chunk);
         self.ip = 0;
 
@@ -28,7 +34,7 @@ impl<'a> VM<'a> {
     }
 
     fn run(&mut self) -> InterpretResult {
-        let chunk = self.chunk.unwrap();
+        let chunk = self.chunk.as_ref().unwrap();
         loop {
             #[cfg(feature = "debug_trace_execution")]
             {
@@ -81,6 +87,7 @@ impl<'a> VM<'a> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InterpretResult {
     Ok,
     CompileError,

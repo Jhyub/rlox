@@ -1,28 +1,45 @@
 use rlox::chunk::{Chunk, OpCode};
-use rlox::vm::VM;
+use rlox::vm::{InterpretResult, VM};
+
+use std::io::Write;
 
 fn main() {
     let mut vm = VM::new();
-    let mut chunk = Chunk::new();
 
-    let constant = chunk.add_constant(1.2);
-    chunk.write(OpCode::Constant as u8, 123);
-    chunk.write(constant as u8, 123);
+    let args = std::env::args().collect::<Vec<String>>();
 
-    let constant = chunk.add_constant(3.4);
-    chunk.write(OpCode::Constant as u8, 123);
-    chunk.write(constant as u8, 123);
+    if args.len() == 1 {
+        repl(&mut vm);
+    } else if args.len() == 2 {
+        run_file(&mut vm, &args[1]);
+    } else {
+        eprintln!("Usage: rlox [path]");
+        std::process::exit(64);
+    }
+}
 
-    chunk.write(OpCode::Add as u8, 123);
+fn repl(vm: &mut VM) {
+    loop {
+        print!("> ");
+        std::io::stdout().flush().unwrap();
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).unwrap();
+        let input = input.trim();
+        if input.is_empty() {
+            println!();
+            break;
+        }
+        let _ = vm.interpret(input);
+    }
+}
 
-    let constant = chunk.add_constant(5.6);
-    chunk.write(OpCode::Constant as u8, 123);
-    chunk.write(constant as u8, 123);
-
-    chunk.write(OpCode::Divide as u8, 123);
-    chunk.write(OpCode::Negate as u8, 123);
-
-    chunk.write(OpCode::Return as u8, 123);
-    chunk.disassemble("test chunk");
-    vm.interpret(&chunk);
+fn run_file(vm: &mut VM,path: &str) {
+    let contents = std::fs::read_to_string(path).unwrap();
+    let result = vm.interpret(&contents);
+    if result == InterpretResult::CompileError {
+        std::process::exit(65);
+    }
+    if result == InterpretResult::RuntimeError {
+        std::process::exit(70);
+    }
 }
