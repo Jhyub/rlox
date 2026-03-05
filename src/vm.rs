@@ -1,5 +1,8 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::object::Object;
 use crate::value::Value;
+
+use std::rc::Rc;
 
 pub struct VM {
     chunk: Option<Chunk>,
@@ -78,7 +81,7 @@ impl VM {
                     let constant = {
                         let idx = chunk.code()[self.ip];
                         self.ip += 1;
-                        chunk.constants().values()[idx as usize]
+                        chunk.constants().values()[idx as usize].clone()
                     };
                     self.stack.push(constant);
                 }
@@ -100,10 +103,22 @@ impl VM {
                 OpCode::Equal => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    self.stack.push(Value::Bool(Self::values_equal(a, b)));
+                    self.stack.push(Value::Bool(a == b));
                 }
                 OpCode::Add => {
-                    binary_op!(self, Value::Number, +);
+                    if let (Value::Object(a), Value::Object(b)) = (self.peek(0), self.peek(1))
+                    && let (Object::String(a), Object::String(b)) = (a.as_ref(), b.as_ref()) {
+                        _ = self.stack.pop().unwrap();
+                        _ = self.stack.pop().unwrap();
+                        self.stack.push(Value::Object(Rc::new(Object::String(b.clone() + &a))));
+                    } else if let (Value::Number(a), Value::Number(b)) = (self.peek(0), self.peek(1)) {
+                        _ = self.stack.pop().unwrap();
+                        _ = self.stack.pop().unwrap();
+                        self.stack.push(Value::Number(a + b));
+                    } else {
+                        runtime_error!(self, "Operands must be numbers or strings.");
+                        return InterpretResult::RuntimeError;
+                    }
                 }
                 OpCode::Subtract => {
                     binary_op!(self, Value::Number, -);
@@ -123,7 +138,8 @@ impl VM {
                 }
                 OpCode::Not => {
                     let value = self.stack.pop().unwrap();
-                    self.stack.push(Value::Bool(Self::is_falsey(value)));
+                    let value: bool = value.into();
+                    self.stack.push(Value::Bool(!value));
                 }
                 OpCode::Return => {
                     let value = self.stack.pop().unwrap();
@@ -135,24 +151,7 @@ impl VM {
     }
 
     fn peek(&self, distance: usize) -> Value {
-        self.stack[self.stack.len() - distance - 1]
-    }
-
-    fn is_falsey(value: Value) -> bool {
-        match value {
-            Value::Nil => true,
-            Value::Bool(b) => !b,
-            _ => false,
-        }
-    }
-
-    fn values_equal(a: Value, b: Value) -> bool {
-        match (a, b) {
-            (Value::Nil, Value::Nil) => true,
-            (Value::Bool(a), Value::Bool(b)) => a == b,
-            (Value::Number(a), Value::Number(b)) => a == b,
-            _ => false,
-        }
+        self.stack[self.stack.len() - distance - 1].clone()
     }
 
     fn reset_stack(&mut self) {

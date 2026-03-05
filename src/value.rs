@@ -1,8 +1,12 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+use crate::object::Object;
+use std::rc::Rc;
+
+#[derive(Debug, Clone)]
 pub enum Value {
     Bool(bool),
     Nil,
     Number(f64),
+    Object(Rc<Object>),
 }
 
 impl std::fmt::Display for Value {
@@ -11,6 +15,29 @@ impl std::fmt::Display for Value {
             Value::Bool(b) => write!(f, "{}", b),
             Value::Nil => write!(f, "nil"),
             Value::Number(n) => write!(f, "{}", n),
+            Value::Object(o) => write!(f, "{}", o),
+        }
+    }
+}
+
+impl Into<bool> for Value {
+    fn into(self) -> bool {
+        match self {
+            Value::Bool(b) => b,
+            Value::Nil => false,
+            _ => true
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Bool(a), Value::Bool(b)) => a == b,
+            (Value::Nil, Value::Nil) => true,
+            (Value::Number(a), Value::Number(b)) => a == b,
+            (Value::Object(a), Value::Object(b)) => a == b,
+            _ => false,
         }
     }
 }

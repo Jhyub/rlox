@@ -1,6 +1,9 @@
 use crate::chunk::{Chunk, OpCode};
+use crate::object::Object;
 use crate::scanner::{Scanner, Token, TokenType};
 use crate::value::Value;
+
+use std::rc::Rc;
 
 pub fn compile(source: &str, chunk: &mut Chunk) -> bool {
     let mut scanner = Scanner::new(source);
@@ -142,6 +145,12 @@ impl<'a> Parser<'a> {
         self.emit_constant(Value::Number(value));
     }
 
+    fn string(&mut self) {
+        let value = Object::String(self.previous.lexeme()[1..self.previous.lexeme().len() - 1].to_string());
+        let value = Rc::new(value);
+        self.emit_constant(Value::Object(value));
+    }
+
     fn unary(&mut self) {
         let operator_type = self.previous.ttype();
 
@@ -226,7 +235,7 @@ const RULES: [ParseRule; 40] = [
     ParseRule { prefix: None, infix: Some(|x: &mut Parser| x.binary()), precedence: Precedence::Comparison }, // Token::Less
     ParseRule { prefix: None, infix: Some(|x: &mut Parser| x.binary()), precedence: Precedence::Comparison }, // Token::LessEqual
     ParseRule { prefix: None, infix: None, precedence: Precedence::None }, // Token::Identifier
-    ParseRule { prefix: None, infix: None, precedence: Precedence::None }, // Token::String
+    ParseRule { prefix: Some(|x: &mut Parser| x.string()), infix: None, precedence: Precedence::None }, // Token::String
     ParseRule { prefix: Some(|x: &mut Parser| x.number()), infix: None, precedence: Precedence::None }, // Token::Number
     ParseRule { prefix: None, infix: None, precedence: Precedence::None }, // Token::And
     ParseRule { prefix: None, infix: None, precedence: Precedence::None }, // Token::Class
