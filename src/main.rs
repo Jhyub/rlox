@@ -1,4 +1,3 @@
-use rlox::chunk::{Chunk, OpCode};
 use rlox::vm::{InterpretResult, VM};
 
 use std::io::Write;

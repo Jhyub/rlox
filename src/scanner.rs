@@ -163,14 +163,14 @@ impl <'a> Scanner<'a> {
     fn identifier_type(&mut self) -> TokenType {
         match self.source[self.start..self.start+1].chars().next().unwrap() {
             'a' => self.check_keyword(1, 2, "nd", TokenType::And),
-            'c' => self.check_keyword(1, 3, "lass", TokenType::Class),
-            'e' => self.check_keyword(1, 2, "lse", TokenType::Else),
+            'c' => self.check_keyword(1, 4, "lass", TokenType::Class),
+            'e' => self.check_keyword(1, 3, "lse", TokenType::Else),
             'f' => {
                 if self.current - self.start > 1 {
                     match self.source[self.start+1..self.start+2].chars().next().unwrap() {
                         'a' => self.check_keyword(2, 3, "lse", TokenType::False),
                         'o' => self.check_keyword(2, 1, "r", TokenType::For),
-                        'u' => self.check_keyword(2, 3, "n", TokenType::Fun),
+                        'u' => self.check_keyword(2, 1, "n", TokenType::Fun),
                         _ => TokenType::Identifier,
                     }
                 } else {
@@ -186,8 +186,8 @@ impl <'a> Scanner<'a> {
             't' => {
                 if self.current - self.start > 1 {
                     match self.source[self.start+1..self.start+2].chars().next().unwrap() {
-                        'h' => self.check_keyword(2, 1, "is", TokenType::This),
-                        'r' => self.check_keyword(2, 1, "ue", TokenType::True),
+                        'h' => self.check_keyword(2, 2, "is", TokenType::This),
+                        'r' => self.check_keyword(2, 2, "ue", TokenType::True),
                         _ => TokenType::Identifier,
                     }
                 } else {
@@ -196,12 +196,12 @@ impl <'a> Scanner<'a> {
             }
             'v' => self.check_keyword(1, 2, "ar", TokenType::Var),
             'w' => self.check_keyword(1, 4, "hile", TokenType::While),
-            _ => TokenType::Identifier,
+            _ => TokenType::Identifier
         }
     }
 
     fn check_keyword(&self, start: usize, length: usize, rest: &str, ttype: TokenType) -> TokenType {
-        if (self.current - self.start) == (start + length) && self.source[self.start..self.start + length].to_string() == rest {
+        if (self.current - self.start) == (start + length) && self.source[self.start + start..self.start + start + length].to_string() == rest {
             return ttype;
         }
 

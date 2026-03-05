@@ -4,10 +4,17 @@ use crate::value::{Value, ValueArray};
 #[repr(u8)]
 pub enum OpCode {
     Constant,
+    Nil,
+    True,
+    False,
+    Equal,
+    Greater,
+    Less,
     Add,
     Subtract,
     Multiply,
     Divide,
+    Not,
     Negate,
     Return,
 }
@@ -16,12 +23,19 @@ impl From<u8> for OpCode {
     fn from(byte: u8) -> Self {
         match byte {
             0 => OpCode::Constant,
-            1 => OpCode::Add,
-            2 => OpCode::Subtract,
-            3 => OpCode::Multiply,
-            4 => OpCode::Divide,
-            5 => OpCode::Negate,
-            6 => OpCode::Return,
+            1 => OpCode::Nil,
+            2 => OpCode::True,
+            3 => OpCode::False,
+            4 => OpCode::Equal,
+            5 => OpCode::Greater,
+            6 => OpCode::Less,
+            7 => OpCode::Add,
+            8 => OpCode::Subtract,
+            9 => OpCode::Multiply,
+            10 => OpCode::Divide,
+            11 => OpCode::Not,
+            12 => OpCode::Negate,
+            13 => OpCode::Return,
             _ => panic!("Invalid opcode: {}", byte),
         }
     }

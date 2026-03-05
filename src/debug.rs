@@ -34,16 +34,25 @@ impl Chunk {
 
         match instruction {
             OpCode::Return => simple_instruction("OP_RETURN", offset),
+            OpCode::Nil => simple_instruction("OP_NIL", offset),
+            OpCode::True => simple_instruction("OP_TRUE", offset),
+            OpCode::False => simple_instruction("OP_FALSE", offset),
+            OpCode::Equal => simple_instruction("OP_EQUAL", offset),
+            OpCode::Greater => simple_instruction("OP_GREATER", offset),
+            OpCode::Less => simple_instruction("OP_LESS", offset),
             OpCode::Add => simple_instruction("OP_ADD", offset),
             OpCode::Subtract => simple_instruction("OP_SUBTRACT", offset),
             OpCode::Multiply => simple_instruction("OP_MULTIPLY", offset),
             OpCode::Divide => simple_instruction("OP_DIVIDE", offset),
             OpCode::Negate => simple_instruction("OP_NEGATE", offset),
+            OpCode::Not => simple_instruction("OP_NOT", offset),
             OpCode::Constant => constant_instruction("OP_CONSTANT", self, offset),
+            /*
             _ => {
                 println!("Unknown opcode: {:?}", instruction);
                 offset + 1
             },
+            */
         }
     }
 }
