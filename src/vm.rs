@@ -2,12 +2,14 @@ use crate::chunk::{Chunk, OpCode};
 use crate::object::Object;
 use crate::value::Value;
 
+use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct VM {
     chunk: Option<Chunk>,
     ip: usize,
     stack: Vec<Value>,
+    globals: HashMap<String, Value>,
 }
 
 
@@ -42,7 +44,7 @@ macro_rules! binary_op {
 
 impl VM {
     pub fn new() -> Self {
-        Self { chunk: None, ip: 0, stack: Vec::new() }
+        Self { chunk: None, ip: 0, stack: Vec::new(), globals: HashMap::new() }
     }
 
     pub fn interpret(&mut self, source: &str) -> InterpretResult {
@@ -129,6 +131,66 @@ impl VM {
                 OpCode::Divide => {
                     binary_op!(self, Value::Number, /);
                 }
+                OpCode::DefineGlobal => {
+                    let constant = {
+                        let idx = chunk.code()[self.ip];
+                        self.ip += 1;
+                        chunk.constants().values()[idx as usize].clone()
+                    };
+
+                    if let Value::Object(object) = constant 
+                    && let Object::String(name) = object.as_ref()
+                    {
+                        self.globals.insert(name.clone(), self.stack.pop().unwrap());
+                    } else {
+                        runtime_error!(self, "Global variable must be a string.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
+                OpCode::SetGlobal => {
+                    let constant = {
+                        let idx = chunk.code()[self.ip];
+                        self.ip += 1;
+                        chunk.constants().values()[idx as usize].clone()
+                    };
+                    
+                    if let Value::Object(object) = constant
+                    && let Object::String(name) = object.as_ref()
+                    {
+                        if self.globals.contains_key(name) {
+                            self.globals.insert(name.clone(), self.peek(0).clone());
+                        } else {
+                            runtime_error!(self, "Undefined variable '{}'.", name);
+                            return InterpretResult::RuntimeError;
+                        }
+                    } else {
+                        runtime_error!(self, "Global variable must be a string.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
+                OpCode::GetGlobal => {
+                    let constant = {
+                        let idx = chunk.code()[self.ip];
+                        self.ip += 1;
+                        chunk.constants().values()[idx as usize].clone()
+                    };
+
+                    if let Value::Object(object)= constant
+                    && let Object::String(name) = object.as_ref()
+                    {
+                        let value = self.globals.get(name);
+
+                        if let Some(value) = value {
+                            self.stack.push(value.clone());
+                        } else {
+                            runtime_error!(self, "Undefined variable '{}'.", name);
+                            return InterpretResult::RuntimeError;
+                        }
+                    } else {
+                        runtime_error!(self, "Global variable must be a string.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
                 OpCode::Negate => {
                     let Value::Number(value) = self.stack.pop().unwrap() else {
                         runtime_error!(self, "Operand must be a number.");
@@ -141,9 +203,14 @@ impl VM {
                     let value: bool = value.into();
                     self.stack.push(Value::Bool(!value));
                 }
-                OpCode::Return => {
+                OpCode::Print => {
                     let value = self.stack.pop().unwrap();
                     println!("{}", value);
+                }
+                OpCode::Pop => {
+                    _ = self.stack.pop().unwrap();
+                }
+                OpCode::Return => {
                     return InterpretResult::Ok
                 }
             }

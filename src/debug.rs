@@ -47,6 +47,11 @@ impl Chunk {
             OpCode::Negate => simple_instruction("OP_NEGATE", offset),
             OpCode::Not => simple_instruction("OP_NOT", offset),
             OpCode::Constant => constant_instruction("OP_CONSTANT", self, offset),
+            OpCode::Print => simple_instruction("OP_PRINT", offset),
+            OpCode::Pop => simple_instruction("OP_POP", offset),
+            OpCode::DefineGlobal => constant_instruction("OP_DEFINE_GLOBAL", self, offset),
+            OpCode::GetGlobal => constant_instruction("OP_GET_GLOBAL", self, offset),
+            OpCode::SetGlobal => constant_instruction("OP_SET_GLOBAL", self, offset),
             /*
             _ => {
                 println!("Unknown opcode: {:?}", instruction);
